@@ -1,11 +1,8 @@
-CREATE DATABASE BelyashCheburek 
-ENCODING 'UTF8' 
-LC_COLLATE = 'ru_RU.UTF-8'
-LC_CTYPE = 'ru_RU.UTF-8';
+/* Скрипт создания таблиц БД Беляш-Чебурек */
 
 -- Клиент/E1
 CREATE TABLE Clients (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     lastName VARCHAR(100) NOT NULL, -- ФАМИЛИЯ
     firstName VARCHAR(100) NOT NULL, -- ИМЯ
     patronimicName VARCHAR(100) NULL, -- ОТЧЕСТВО
@@ -30,7 +27,7 @@ CREATE TABLE Masters (
 CREATE TABLE Locations (
     id SERIAL PRIMARY KEY,
     capacity INT NOT NULL, -- ВМЕСТИМОСТЬ
-    possibleTime DATETIME NOT NULL, -- ВОЗМОЖНОЕ ВРЕМЯ
+    possibleTime TIME NOT NULL, -- ВОЗМОЖНОЕ ВРЕМЯ
     rentCost DECIMAL(12, 2), -- СТОИМОСТЬ АРЕНДЫ
     address VARCHAR(300) NOT NULL -- АДРЕС
 );
@@ -46,7 +43,7 @@ CREATE TABLE Courses (
 -- Тип занятия/E12
 CREATE TABLE LessonTypes (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
+    title VARCHAR(300) NOT NULL -- НАЗВАНИЕ
 );
 
 -- Занятие/E4
@@ -62,37 +59,37 @@ CREATE TABLE Registrations (
     id SERIAL PRIMARY KEY,
     courseId INTEGER REFERENCES Courses(id) ON DELETE RESTRICT, -- ИД КУРСА
     locationId INTEGER REFERENCES Locations(id) ON DELETE RESTRICT, -- ИД СТУДИИ
-    schedule DATETIME NOT NULL, -- РАСПИСАНИЕ
+    schedule TIMESTAMP NOT NULL, -- РАСПИСАНИЕ
     cost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ
 );
 
 -- Продукт/E7
 CREATE TABLE Food (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
     averagePrice DECIMAL(12, 2) NOT NULL, -- СРЕДНЯЯ ЦЕНА
     deliveryTime INTERVAL NOT NULL, -- ВРЕМЯ ДОСТАВКИ
-    delivaryCost DECIMAL(12, 2) NOT NULL, -- СТОИМОСТЬ ДОСТАВКИ
+    delivaryCost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ ДОСТАВКИ
 );
 
 -- Оборудование/E8
 CREATE TABLE Equipment (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
     averageRentalCost DECIMAL(12, 2) NOT NULL, -- СРЕДНЯЯ СТОИМОСТЬ АРЕНДЫ
     deliveryTime INTERVAL NOT NULL, -- ВРЕМЯ ДОСТАВКИ
-    delivaryCost DECIMAL(12, 2) NOT NULL, -- СТОИМОСТЬ ДОСТАВКИ
+    delivaryCost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ ДОСТАВКИ
 );
 
 -- Тип лекарства/E13
 CREATE TABLE MedicineTypes (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
+    title VARCHAR(300) NOT NULL -- НАЗВАНИЕ
 );
 
 -- Лекарство/E10
 CREATE TABLE Medicines (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     typeId INTEGER REFERENCES MedicineTypes(id) ON DELETE RESTRICT, -- ИД ТИПА
     title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
     cost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ
@@ -101,21 +98,23 @@ CREATE TABLE Medicines (
 -- Аптечка/E9
 CREATE TABLE RegistrationMedicines (
     registrationId INTEGER REFERENCES Registrations(id) ON DELETE RESTRICT, -- ИД ЗАПИСИ
-    medicineId INTEGER REFERENCES Medicines(id) ON DELETE RESTRICT, -- ИД ЛЕКАРСТВА
-    quantity INTEGER -- КОЛИЧЕСТВО
+    medicineId BIGINT REFERENCES Medicines(id) ON DELETE RESTRICT, -- ИД ЛЕКАРСТВА
+    quantity INTEGER, -- КОЛИЧЕСТВО
+    PRIMARY KEY (registrationId, medicineId)
 );
 
 -- Непереносимость/E11
 CREATE TABLE Intolerances (
-    id SERIAL PRIMARY KEY,
-    clientId INTEGER REFERENCES Clients(id) ON DELETE RESTRICT, -- ИД КЛИЕНТА
-    medicineId INTEGER REFERENCES Medicines(id) ON DELETE RESTRICT -- ИД ЛЕКАРСТВА
+    id BIGSERIAL PRIMARY KEY,
+    clientId BIGINT REFERENCES Clients(id) ON DELETE RESTRICT, -- ИД КЛИЕНТА
+    medicineId BIGINT REFERENCES Medicines(id) ON DELETE RESTRICT -- ИД ЛЕКАРСТВА
 );
 
 -- Заменитель/E20
 CREATE TABLE Substitutes (
-    intoleranceId INTEGER REFERENCES Intolerances(id) ON DELETE RESTRICT, -- ИД НЕПЕРЕНОСИМОСТИ
-    medicineId INTEGER REFERENCES Medicines(id) ON DELETE RESTRICT -- ИД ЛЕКАРСТВА
+    intoleranceId BIGINT REFERENCES Intolerances(id) ON DELETE RESTRICT, -- ИД НЕПЕРЕНОСИМОСТИ
+    medicineId BIGINT REFERENCES Medicines(id) ON DELETE RESTRICT, -- ИД ЛЕКАРСТВА
+    PRIMARY KEY (intoleranceId, medicineId)
 );
 
 -- ЗанятиеМастер/E14
@@ -123,21 +122,24 @@ CREATE TABLE LessonMaster (
     lessonId INTEGER REFERENCES Lessons(id) ON DELETE RESTRICT, -- ИД ЗАНЯТИЯ
     registrationId INTEGER REFERENCES Registrations(id) ON DELETE RESTRICT, -- ИД ЗАПИСИ
     masterId INTEGER REFERENCES Masters(id) ON DELETE RESTRICT, -- ИД МАСТЕРА
-    lessonDate DATETIME NOT NULL -- ДАТА ЗАНЯТИЯ
+    lessonDate TIMESTAMP NOT NULL, -- ДАТА ЗАНЯТИЯ
+    PRIMARY KEY (lessonId, registrationId)
 );
 
 -- ЗанятиеПродукт/E15
 CREATE TABLE LessonFood (
     lessonId INTEGER REFERENCES Lessons(id) ON DELETE RESTRICT, -- ИД ЗАНЯТИЯ
-    foodId INTEGER REFERENCES Food(id) ON DELETE RESTRICT, -- ИД ПРОДУКТА
-    quantity INTEGER NOT NULL -- ДАТА ЗАНЯТИЯ
+    foodId BIGINT REFERENCES Food(id) ON DELETE RESTRICT, -- ИД ПРОДУКТА
+    quantity INTEGER NOT NULL, -- ДАТА ЗАНЯТИЯ
+    PRIMARY KEY (lessonId, foodId)
 );
 
 -- ЗанятиеОборудование/E16
 CREATE TABLE LessonEquipment (
     lessonId INTEGER REFERENCES Lessons(id) ON DELETE RESTRICT, -- ИД ЗАНЯТИЯ
-    equipmentId INTEGER REFERENCES Equipment(id) ON DELETE RESTRICT, -- ИД ОБОРУДОВАНИЯ
-    quantity INTEGER NOT NULL -- ДАТА ЗАНЯТИЯ
+    equipmentId BIGINT REFERENCES Equipment(id) ON DELETE RESTRICT, -- ИД ОБОРУДОВАНИЯ
+    quantity INTEGER NOT NULL, -- ДАТА ЗАНЯТИЯ
+    PRIMARY KEY (lessonId, equipmentId)
 );
 
 -- ЗаписьМастер/E17
@@ -148,15 +150,15 @@ CREATE TABLE RegistrationMaster (
 );
 
 -- СтудияОборудование/E18
-CREATE TABLE LessonEquipment (
+CREATE TABLE LocationEquipment (
     locationId INTEGER REFERENCES Locations(id) ON DELETE RESTRICT, -- ИД СТУДИИ
-    equipmentId INTEGER REFERENCES Equipment(id) ON DELETE RESTRICT, -- ИД ОБОРУДОВАНИЯ
-    PRIMARY KEY (lessonId, equipmentId)
+    equipmentId BIGINT REFERENCES Equipment(id) ON DELETE RESTRICT, -- ИД ОБОРУДОВАНИЯ
+    PRIMARY KEY (locationId, equipmentId)
 );
 
 -- ЗаписьКлиент/E19
 CREATE TABLE RegistrationClient (
     registrationId INTEGER REFERENCES Registrations(id) ON DELETE RESTRICT, -- ИД ЗАПИСИ
-    clientId INTEGER REFERENCES Clients(id) ON DELETE RESTRICT, -- ИД КЛИЕНТА
+    clientId BIGINT REFERENCES Clients(id) ON DELETE RESTRICT, -- ИД КЛИЕНТА
     PRIMARY KEY (registrationId, clientId)
 );
