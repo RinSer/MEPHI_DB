@@ -6,7 +6,7 @@ CREATE TABLE Clients (
     lastName VARCHAR(100) NOT NULL, -- ФАМИЛИЯ
     firstName VARCHAR(100) NOT NULL, -- ИМЯ
     patronimicName VARCHAR(100) NULL, -- ОТЧЕСТВО
-    phone VARCHAR(15) NOT NULL, -- ТЕЛЕФОН
+    phone VARCHAR(20) NOT NULL, -- ТЕЛЕФОН
     email VARCHAR(100) NULL, -- ПОЧТА
     account VARCHAR(30) NULL -- СЧЕТ
 );
