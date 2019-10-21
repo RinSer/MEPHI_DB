@@ -1,9 +1,5 @@
-import re, random
-import psycopg2
+import psycopg2, seed
 from faker import Faker
-
-MAIN_ENTITY_COUNT = 500
-AUX_ENTITY_COUNT = 300
 
 # Create russian faker
 faker = Faker('ru_RU')
@@ -17,7 +13,6 @@ cursor = connection.cursor()
 cursor.execute(
     "CREATE DATABASE belyashcheburek ENCODING 'UTF8';"
     )
-
 cursor.close()
 connection.close()
 
@@ -25,20 +20,7 @@ connection.close()
 connection = psycopg2.connect("dbname=belyashcheburek user=cheburek password=belyash")
 cursor = connection.cursor()
 
-# Load schema creation script 
-with open('createCheburek.sql', 'r', encoding='utf8') as script:
-    cursor.execute(script.read())
-connection.commit()
-
-# Seeding clients
-query = "INSERT INTO Clients (lastName, firstName, patronimicName, phone, email, account) VALUES "
-clients = list()
-for i in range(MAIN_ENTITY_COUNT):
-    name = faker.name().split(' ')
-    clients.append("('%s','%s','%s','%s','%s','%s')" % (name[0], name[1], name[2], 
-        faker.phone_number().replace(' ', ''), faker.free_email(), faker.bban()))
-query_data = ','.join(clients)
-cursor.execute(query + query_data)
+seed.create_db(cursor, connection, faker)    
 connection.commit()
 
 # Close DB connection

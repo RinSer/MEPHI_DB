@@ -69,7 +69,7 @@ CREATE TABLE Food (
     title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
     averagePrice DECIMAL(12, 2) NOT NULL, -- СРЕДНЯЯ ЦЕНА
     deliveryTime INTERVAL NOT NULL, -- ВРЕМЯ ДОСТАВКИ
-    delivaryCost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ ДОСТАВКИ
+    deliveryCost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ ДОСТАВКИ
 );
 
 -- Оборудование/E8
@@ -78,7 +78,7 @@ CREATE TABLE Equipment (
     title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
     averageRentalCost DECIMAL(12, 2) NOT NULL, -- СРЕДНЯЯ СТОИМОСТЬ АРЕНДЫ
     deliveryTime INTERVAL NOT NULL, -- ВРЕМЯ ДОСТАВКИ
-    delivaryCost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ ДОСТАВКИ
+    deliveryCost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ ДОСТАВКИ
 );
 
 -- Тип лекарства/E13
@@ -130,7 +130,7 @@ CREATE TABLE LessonMaster (
 CREATE TABLE LessonFood (
     lessonId INTEGER REFERENCES Lessons(id) ON DELETE RESTRICT, -- ИД ЗАНЯТИЯ
     foodId BIGINT REFERENCES Food(id) ON DELETE RESTRICT, -- ИД ПРОДУКТА
-    quantity INTEGER NOT NULL, -- ДАТА ЗАНЯТИЯ
+    quantity INTEGER NOT NULL, -- КОЛИЧЕСТВО
     PRIMARY KEY (lessonId, foodId)
 );
 
@@ -138,7 +138,7 @@ CREATE TABLE LessonFood (
 CREATE TABLE LessonEquipment (
     lessonId INTEGER REFERENCES Lessons(id) ON DELETE RESTRICT, -- ИД ЗАНЯТИЯ
     equipmentId BIGINT REFERENCES Equipment(id) ON DELETE RESTRICT, -- ИД ОБОРУДОВАНИЯ
-    quantity INTEGER NOT NULL, -- ДАТА ЗАНЯТИЯ
+    quantity INTEGER NOT NULL, -- КОЛИЧЕСТВО
     PRIMARY KEY (lessonId, equipmentId)
 );
 
@@ -153,7 +153,8 @@ CREATE TABLE RegistrationMaster (
 CREATE TABLE LocationEquipment (
     locationId INTEGER REFERENCES Locations(id) ON DELETE RESTRICT, -- ИД СТУДИИ
     equipmentId BIGINT REFERENCES Equipment(id) ON DELETE RESTRICT, -- ИД ОБОРУДОВАНИЯ
-    PRIMARY KEY (locationId, equipmentId)
+    quantity INTEGER NOT NULL, -- КОЛИЧЕСТВО
+	PRIMARY KEY (locationId, equipmentId)
 );
 
 -- ЗаписьКлиент/E19
