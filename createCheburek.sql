@@ -123,7 +123,7 @@ CREATE TABLE LessonMaster (
     registrationId INTEGER REFERENCES Registrations(id) ON DELETE RESTRICT, -- ИД ЗАПИСИ
     masterId INTEGER REFERENCES Masters(id) ON DELETE RESTRICT, -- ИД МАСТЕРА
     lessonDate TIMESTAMP NOT NULL, -- ДАТА ЗАНЯТИЯ
-    PRIMARY KEY (lessonId, registrationId)
+    PRIMARY KEY (lessonId, registrationId, masterId)
 );
 
 -- ЗанятиеПродукт/E15

@@ -3,7 +3,8 @@ import random
 
 TYPE_ENTITY_COUNT = 4
 MAIN_ENTITY_COUNT = 1000
-AUX_ENTITY_COUNT = 1000
+AUX_ENTITY_COUNT = 100
+NULL = 'NULL'
 
 
 def get_user(faker):
@@ -24,12 +25,14 @@ def get_int_str(length):
         seq += str(random.randrange(0, 9, 1))
     return seq
 
+def add_brackets(s):
+    return "'" + str(s) + "'" if s != NULL else s
 
 def create_row(row):
     '''
     Function to return row str from tuple
     '''
-    return '(' + ','.join("'" + str(e) + "'" for e in row) + ')'
+    return '(' + ','.join(add_brackets(e) for e in row) + ')'
 
 
 def create_db(cursor, connection, faker):
@@ -57,7 +60,7 @@ def create_db(cursor, connection, faker):
     for _ in range(MAIN_ENTITY_COUNT):
         name = get_user(faker)
         masters.append(create_row((name[0], name[1], name[2], 
-            get_int_str(4), get_int_str(6), random.randrange(0, 100, 1), faker.text(max_nb_chars=300))))
+            get_int_str(4), get_int_str(6), 0, faker.text(max_nb_chars=300))))
     query_data = ','.join(masters)
     cursor.execute(query + query_data)
 
@@ -74,7 +77,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Courses (title, description, duration) VALUES "
     courses = list()
     for _ in range(int(MAIN_ENTITY_COUNT/5)):
-        courses.append(create_row((faker.text(max_nb_chars=100), faker.text(max_nb_chars=300), random.randrange(10, 100, 1))))
+        courses.append(create_row((faker.text(max_nb_chars=50), faker.text(max_nb_chars=300), random.randrange(10, 100, 1))))
     query_data = ','.join(courses)
     cursor.execute(query + query_data)
 
@@ -82,7 +85,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO LessonTypes (title) VALUES "
     lessonTypes = list()
     for _ in range(TYPE_ENTITY_COUNT):
-        lessonTypes.append(create_row((faker.text(max_nb_chars=100),)))
+        lessonTypes.append(create_row((faker.text(max_nb_chars=50),)))
     query_data = ','.join(lessonTypes)
     cursor.execute(query + query_data)
 
@@ -93,9 +96,10 @@ def create_db(cursor, connection, faker):
     lessonTypes = [t[0] for t in cursor.fetchall()]
     query = "INSERT INTO Lessons (courseId, typeId, duration) VALUES "
     lessons = list()
-    for _ in range(MAIN_ENTITY_COUNT*10):
-        lessons.append(create_row((courses[random.randrange(0, len(courses), 1)], 
-            lessonTypes[random.randrange(0, len(lessonTypes), 1)], random.randrange(40, 120, 40))))
+    for course in courses:
+        for _ in range(int(AUX_ENTITY_COUNT/random.randrange(1, int(AUX_ENTITY_COUNT/2)))):
+            lessons.append(create_row((course, lessonTypes[random.randrange(0, len(lessonTypes), 1)], 
+                random.randrange(40, 120, 40))))
     query_data = ','.join(lessons)
     cursor.execute(query + query_data)
 
@@ -104,11 +108,12 @@ def create_db(cursor, connection, faker):
     locations = [l[0] for l in cursor.fetchall()]
     query = "INSERT INTO Registrations (courseId, locationId, schedule, cost) VALUES "
     registrations = list()
-    for _ in range(MAIN_ENTITY_COUNT):
-        registrations.append(create_row((courses[random.randrange(0, len(courses), 1)], 
-            locations[random.randrange(0, len(locations), 1)], 
-            faker.date_time_this_decade(before_now=True, after_now=True, tzinfo=None), 
-            random.randrange(10000, 100000, 1000))))
+    for course in courses:
+        for _ in range(2):
+            registrations.append(create_row((course, 
+                locations[random.randrange(0, len(locations), 1)] if course % 2 == 0 else NULL, 
+                faker.date_time_this_decade(before_now=True, after_now=True, tzinfo=None), 
+                random.randrange(10000, 100000, 1000))))
     query_data = ','.join(registrations)
     cursor.execute(query + query_data)
 
@@ -116,7 +121,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Food (title, averagePrice, deliveryTime, deliveryCost) VALUES "
     food = list()
     for _ in range(MAIN_ENTITY_COUNT*10):
-        food.append(create_row((faker.text(max_nb_chars=100), random.randrange(10, 10000, 10), 
+        food.append(create_row((faker.text(max_nb_chars=50), random.randrange(10, 10000, 10), 
             random.randrange(10, 600, 10), random.randrange(10, 1000, 10))))
     query_data = ','.join(food)
     cursor.execute(query + query_data)
@@ -125,7 +130,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Equipment (title, averageRentalCost, deliveryTime, deliveryCost) VALUES "
     equipment = list()
     for _ in range(MAIN_ENTITY_COUNT*10):
-        equipment.append(create_row((faker.text(max_nb_chars=100), random.randrange(10, 10000, 10), 
+        equipment.append(create_row((faker.text(max_nb_chars=50), random.randrange(10, 10000, 10), 
             random.randrange(10, 600, 10), random.randrange(10, 1000, 10))))
     query_data = ','.join(equipment)
     cursor.execute(query + query_data)
@@ -134,7 +139,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO MedicineTypes (title) VALUES "
     medicineTypes = list()
     for _ in range(TYPE_ENTITY_COUNT*10):
-        medicineTypes.append(create_row((faker.text(max_nb_chars=100),)))
+        medicineTypes.append(create_row((faker.text(max_nb_chars=50),)))
     query_data = ','.join(medicineTypes)
     cursor.execute(query + query_data)
 
@@ -145,7 +150,7 @@ def create_db(cursor, connection, faker):
     lessons = list()
     for _ in range(MAIN_ENTITY_COUNT*10):
         lessons.append(create_row((medicineTypes[random.randrange(0, len(medicineTypes), 1)], 
-            faker.text(max_nb_chars=100), random.randrange(100, 10000, 10))))
+            faker.text(max_nb_chars=50), random.randrange(100, 10000, 10))))
     query_data = ','.join(lessons)
     cursor.execute(query + query_data)
 
@@ -156,9 +161,10 @@ def create_db(cursor, connection, faker):
     medicines = [m[0] for m in cursor.fetchall()]
     query = "INSERT INTO RegistrationMedicines (registrationId, medicineId, quantity) VALUES "
     registrationMedicines = set()
-    for _ in range(AUX_ENTITY_COUNT):
-        registrationMedicines.add((registrations[random.randrange(0, len(registrations), 1)], 
-            medicines[random.randrange(0, len(medicines), 1)]))
+    for registration in registrations:
+        for _ in range(AUX_ENTITY_COUNT):
+            registrationMedicines.add((registration, medicines[random.randrange(0, len(medicines), 
+                random.randrange(1, 11))]))
     query_data = ','.join(create_row((r[0], r[1], random.randrange(1, 100, 1))) for r in registrationMedicines)
     cursor.execute(query + query_data)
 
@@ -167,7 +173,7 @@ def create_db(cursor, connection, faker):
     clients = [c[0] for c in cursor.fetchall()]
     query = "INSERT INTO Intolerances (clientId, medicineId) VALUES "
     intolerances = set()
-    for _ in range(AUX_ENTITY_COUNT):
+    for _ in range(AUX_ENTITY_COUNT*100):
         intolerances.add(create_row((clients[random.randrange(0, len(clients), 1)], 
             medicines[random.randrange(0, len(medicines), 1)])))
     query_data = ','.join(intolerances)
@@ -178,7 +184,7 @@ def create_db(cursor, connection, faker):
     intolerances = [i[0] for i in cursor.fetchall()]
     query = "INSERT INTO Substitutes (intoleranceId, medicineId) VALUES "
     substitutes = set()
-    for _ in range(AUX_ENTITY_COUNT):
+    for _ in range(AUX_ENTITY_COUNT*100):
         substitutes.add(create_row((intolerances[random.randrange(0, len(intolerances), 1)], 
             medicines[random.randrange(0, len(medicines), 1)])))
     query_data = ','.join(substitutes)
@@ -191,10 +197,10 @@ def create_db(cursor, connection, faker):
     masters = [m[0] for m in cursor.fetchall()]
     query = "INSERT INTO LessonMaster (lessonId, registrationId, masterId, lessonDate) VALUES "
     lessonMasters = set()
-    for _ in range(AUX_ENTITY_COUNT):
-        lessonMasters.add((lessons[random.randrange(0, len(lessons), 1)],
-            registrations[random.randrange(0, len(registrations), 1)], 
-            masters[random.randrange(0, len(masters), 1)]))
+    for master in masters:
+        for _ in range(random.randrange(0, AUX_ENTITY_COUNT)):
+            lessonMasters.add((lessons[random.randrange(0, len(lessons), 1)],
+                registrations[random.randrange(0, len(registrations), 1)], master))
     query_data = ','.join(create_row((l[0], l[1], l[2], 
             faker.date_time_this_decade(before_now=True, after_now=False, tzinfo=None))) for l in lessonMasters)
     cursor.execute(query + query_data)
@@ -204,9 +210,9 @@ def create_db(cursor, connection, faker):
     food = [f[0] for f in cursor.fetchall()]
     query = "INSERT INTO LessonFood (lessonId, foodId, quantity) VALUES "
     lessonFood = set()
-    for _ in range(AUX_ENTITY_COUNT):
-        lessonFood.add((lessons[random.randrange(0, len(lessons), 1)],
-            food[random.randrange(0, len(food), 1)]))
+    for lesson in lessons:
+        for _ in range(random.randrange(2, AUX_ENTITY_COUNT)):
+            lessonFood.add((lesson, food[random.randrange(0, len(food), 1)]))
     query_data = ','.join(create_row((f[0], f[1], random.randrange(1, 100, 1))) for f in lessonFood)
     cursor.execute(query + query_data)
 
@@ -215,25 +221,26 @@ def create_db(cursor, connection, faker):
     equipment = [e[0] for e in cursor.fetchall()]
     query = "INSERT INTO LessonEquipment (lessonId, equipmentId, quantity) VALUES "
     lessonEquipment = set()
-    for _ in range(AUX_ENTITY_COUNT):
-        lessonEquipment.add((lessons[random.randrange(0, len(lessons), 1)],
-            equipment[random.randrange(0, len(equipment), 1)]))
+    for lesson in lessons:
+        for _ in range(random.randrange(2, AUX_ENTITY_COUNT)):
+            lessonEquipment.add((lesson, equipment[random.randrange(0, len(equipment), 1)]))
     query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 100, 1))) for e in lessonEquipment)
     cursor.execute(query + query_data)
 
     # Seeding registration masters
     query = "INSERT INTO RegistrationMaster (registrationId, masterId) VALUES "
     registrationMaster = set()
-    for _ in range(AUX_ENTITY_COUNT):
-        registrationMaster.add(create_row((registrations[random.randrange(0, len(registrations), 1)], 
-            masters[random.randrange(0, len(masters), 1)])))
+    for registration in registrations:
+        for _ in range(random.randrange(0, 6)):
+            registrationMaster.add(create_row((registration, 
+                masters[random.randrange(0, len(masters), 1)])))
     query_data = ','.join(registrationMaster)
     cursor.execute(query + query_data)
 
     # Seeding location equipment
     query = "INSERT INTO LocationEquipment (locationId, equipmentId, quantity) VALUES "
     locationEquipment = set()
-    for _ in range(AUX_ENTITY_COUNT):
+    for _ in range(AUX_ENTITY_COUNT*100):
         locationEquipment.add((locations[random.randrange(0, len(locations), 1)],
             equipment[random.randrange(0, len(equipment), 1)]))
     query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 100, 1))) for e in locationEquipment)
@@ -242,8 +249,16 @@ def create_db(cursor, connection, faker):
     # Seeding registration client
     query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "
     registrationClient = set()
-    for _ in range(AUX_ENTITY_COUNT):
-        registrationClient.add(create_row((registrations[random.randrange(0, len(registrations), 1)], 
-            clients[random.randrange(0, len(clients), 1)])))
+    for registration in registrations:
+        for _ in range(random.randrange(0, AUX_ENTITY_COUNT)):
+            registrationClient.add(create_row((registration, 
+                clients[random.randrange(0, len(clients), 1)])))
     query_data = ','.join(registrationClient)
     cursor.execute(query + query_data)
+
+    # Adjust masters' courses count to data
+    query = "SELECT masterId, count(registrationId) FROM lessonMaster GROUP BY masterId;"
+    cursor.execute(query)
+    for row in cursor.fetchall():
+        cursor.execute("UPDATE masters SET coursesCount = %s WHERE id = %s", (row[1], row[0]))
+    connection.commit()
