@@ -1,5 +1,7 @@
-import psycopg2, seed
+import time, psycopg2, seed
 from faker import Faker
+
+start = time.time()
 
 # Create russian faker
 faker = Faker('ru_RU')
@@ -22,6 +24,10 @@ cursor = connection.cursor()
 
 seed.create_db(cursor, connection, faker)    
 connection.commit()
+
+end = time.time()
+print('DB has been successfully created and seeded')
+print(end - start)
 
 # Close DB connection
 cursor.close()

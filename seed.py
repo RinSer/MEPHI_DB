@@ -2,7 +2,7 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 1000
+MAIN_ENTITY_COUNT = 100000
 AUX_ENTITY_COUNT = 100
 NULL = 'NULL'
 
@@ -39,21 +39,25 @@ def create_db(cursor, connection, faker):
     '''
     Creates all tables in the db and seeds them with data
     '''
+    print('Creating tables')
     # Load schema creation script 
     with open('createCheburek.sql', 'r', encoding='utf8') as script:
         cursor.execute(script.read())
     connection.commit()
 
+    print('Seeding clients')
     # Seeding clients
     query = "INSERT INTO Clients (lastName, firstName, patronimicName, phone, email, account) VALUES "
     clients = list()
     for _ in range(MAIN_ENTITY_COUNT*5):
         name = get_user(faker)
         clients.append(create_row((name[0], name[1], name[2], 
-            faker.phone_number().replace(' ', ''), faker.free_email(), faker.isbn10(separator="-"))))
+            faker.phone_number().replace(' ', ''), faker.free_email(), faker.bban())))
     query_data = ','.join(clients)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding masters')
     # Seeding masters
     query = "INSERT INTO Masters (lastName, firstName, patronimicName, passportSerial, passportNumber, coursesCount, characteristic) VALUES "
     masters = list()
@@ -63,7 +67,9 @@ def create_db(cursor, connection, faker):
             get_int_str(4), get_int_str(6), 0, faker.text(max_nb_chars=300))))
     query_data = ','.join(masters)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding locations')
     # Seeding locations
     query = "INSERT INTO Locations (capacity, possibleTime, rentCost, address) VALUES "
     locations = list()
@@ -72,7 +78,9 @@ def create_db(cursor, connection, faker):
             faker.time(pattern="%H:%M:%S", end_datetime=None), random.randrange(0, 25000, 250), faker.address())))
     query_data = ','.join(locations)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding courses')
     # Seeding courses
     query = "INSERT INTO Courses (title, description, duration) VALUES "
     courses = list()
@@ -80,7 +88,9 @@ def create_db(cursor, connection, faker):
         courses.append(create_row((faker.text(max_nb_chars=50), faker.text(max_nb_chars=300), random.randrange(10, 100, 1))))
     query_data = ','.join(courses)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding lesson types')
     # Seeding lesson types
     query = "INSERT INTO LessonTypes (title) VALUES "
     lessonTypes = list()
@@ -88,7 +98,9 @@ def create_db(cursor, connection, faker):
         lessonTypes.append(create_row((faker.text(max_nb_chars=50),)))
     query_data = ','.join(lessonTypes)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding lessons')
     # Seeding lessons
     cursor.execute("SELECT id FROM Courses")
     courses = [c[0] for c in cursor.fetchall()]
@@ -102,7 +114,9 @@ def create_db(cursor, connection, faker):
                 random.randrange(40, 120, 40))))
     query_data = ','.join(lessons)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding registrations')
     # Seeding registrations
     cursor.execute("SELECT id FROM Locations")
     locations = [l[0] for l in cursor.fetchall()]
@@ -116,7 +130,9 @@ def create_db(cursor, connection, faker):
                 random.randrange(10000, 100000, 1000))))
     query_data = ','.join(registrations)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding food')
     # Seeding food
     query = "INSERT INTO Food (title, averagePrice, deliveryTime, deliveryCost) VALUES "
     food = list()
@@ -125,7 +141,9 @@ def create_db(cursor, connection, faker):
             random.randrange(10, 600, 10), random.randrange(10, 1000, 10))))
     query_data = ','.join(food)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding equipment')
     # Seeding equipment
     query = "INSERT INTO Equipment (title, averageRentalCost, deliveryTime, deliveryCost) VALUES "
     equipment = list()
@@ -134,7 +152,9 @@ def create_db(cursor, connection, faker):
             random.randrange(10, 600, 10), random.randrange(10, 1000, 10))))
     query_data = ','.join(equipment)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding medicine types')
     # Seeding medicine types
     query = "INSERT INTO MedicineTypes (title) VALUES "
     medicineTypes = list()
@@ -142,18 +162,22 @@ def create_db(cursor, connection, faker):
         medicineTypes.append(create_row((faker.text(max_nb_chars=50),)))
     query_data = ','.join(medicineTypes)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding medicines')
     # Seeding medicines
     cursor.execute("SELECT id FROM MedicineTypes")
     medicineTypes = [t[0] for t in cursor.fetchall()]
     query = "INSERT INTO Medicines (typeId, title, cost) VALUES "
     lessons = list()
-    for _ in range(MAIN_ENTITY_COUNT*10):
+    for _ in range(MAIN_ENTITY_COUNT*5):
         lessons.append(create_row((medicineTypes[random.randrange(0, len(medicineTypes), 1)], 
             faker.text(max_nb_chars=50), random.randrange(100, 10000, 10))))
     query_data = ','.join(lessons)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding aid kit')
     # Seeding registration medicines
     cursor.execute("SELECT id FROM Registrations")
     registrations = [r[0] for r in cursor.fetchall()]
@@ -167,7 +191,9 @@ def create_db(cursor, connection, faker):
                 random.randrange(1, 11))]))
     query_data = ','.join(create_row((r[0], r[1], random.randrange(1, 100, 1))) for r in registrationMedicines)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding intolerances')
     # Seeding intolerances
     cursor.execute("SELECT id FROM Clients")
     clients = [c[0] for c in cursor.fetchall()]
@@ -178,7 +204,9 @@ def create_db(cursor, connection, faker):
             medicines[random.randrange(0, len(medicines), 1)])))
     query_data = ','.join(intolerances)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding substitutes')
     # Seeding substitutes
     cursor.execute("SELECT id FROM Intolerances")
     intolerances = [i[0] for i in cursor.fetchall()]
@@ -189,7 +217,9 @@ def create_db(cursor, connection, faker):
             medicines[random.randrange(0, len(medicines), 1)])))
     query_data = ','.join(substitutes)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding lessonMasters')
     # Seeding lesson masters
     cursor.execute("SELECT id FROM Lessons")
     lessons = [l[0] for l in cursor.fetchall()]
@@ -204,7 +234,9 @@ def create_db(cursor, connection, faker):
     query_data = ','.join(create_row((l[0], l[1], l[2], 
             faker.date_time_this_decade(before_now=True, after_now=False, tzinfo=None))) for l in lessonMasters)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('seeding lessonFood')
     # Seeding lesson food
     cursor.execute("SELECT id FROM Food")
     food = [f[0] for f in cursor.fetchall()]
@@ -215,7 +247,9 @@ def create_db(cursor, connection, faker):
             lessonFood.add((lesson, food[random.randrange(0, len(food), 1)]))
     query_data = ','.join(create_row((f[0], f[1], random.randrange(1, 100, 1))) for f in lessonFood)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding lessonEquipment')
     # Seeding lesson equipment
     cursor.execute("SELECT id FROM Equipment")
     equipment = [e[0] for e in cursor.fetchall()]
@@ -226,7 +260,9 @@ def create_db(cursor, connection, faker):
             lessonEquipment.add((lesson, equipment[random.randrange(0, len(equipment), 1)]))
     query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 100, 1))) for e in lessonEquipment)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding registrationMasters')
     # Seeding registration masters
     query = "INSERT INTO RegistrationMaster (registrationId, masterId) VALUES "
     registrationMaster = set()
@@ -236,7 +272,9 @@ def create_db(cursor, connection, faker):
                 masters[random.randrange(0, len(masters), 1)])))
     query_data = ','.join(registrationMaster)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding locationEquipment')
     # Seeding location equipment
     query = "INSERT INTO LocationEquipment (locationId, equipmentId, quantity) VALUES "
     locationEquipment = set()
@@ -245,7 +283,9 @@ def create_db(cursor, connection, faker):
             equipment[random.randrange(0, len(equipment), 1)]))
     query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 100, 1))) for e in locationEquipment)
     cursor.execute(query + query_data)
+    connection.commit()
 
+    print('Seeding registrationClient')
     # Seeding registration client
     query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "
     registrationClient = set()
@@ -255,6 +295,7 @@ def create_db(cursor, connection, faker):
                 clients[random.randrange(0, len(clients), 1)])))
     query_data = ','.join(registrationClient)
     cursor.execute(query + query_data)
+    connection.commit()
 
     # Adjust masters' courses count to data
     query = "SELECT masterId, count(registrationId) FROM lessonMaster GROUP BY masterId;"
