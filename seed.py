@@ -3,7 +3,7 @@ import random
 
 TYPE_ENTITY_COUNT = 4
 MAIN_ENTITY_COUNT = 100000
-AUX_ENTITY_COUNT = 100
+AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 
 
@@ -236,7 +236,7 @@ def create_db(cursor, connection, faker):
     cursor.execute(query + query_data)
     connection.commit()
 
-    print('seeding lessonFood')
+    print('Seeding lessonFood')
     # Seeding lesson food
     cursor.execute("SELECT id FROM Food")
     food = [f[0] for f in cursor.fetchall()]
