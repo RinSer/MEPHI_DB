@@ -37,7 +37,7 @@ CREATE TABLE Courses (
     id SERIAL PRIMARY KEY,
     title VARCHAR(300) NOT NULL, -- НАЗВАНИЕ
     description VARCHAR(500) NOT NULL, -- ОПИСАНИЕ
-    duration INTERVAL NOT NULL -- ПРОДОЛЖИТЕЛЬНОСТЬ
+    duration INTERVAL MINUTE NOT NULL -- ПРОДОЛЖИТЕЛЬНОСТЬ
 );
 
 -- Тип занятия/E12
@@ -51,7 +51,7 @@ CREATE TABLE Lessons (
     id SERIAL PRIMARY KEY,
     courseId INTEGER REFERENCES Courses(id) ON DELETE RESTRICT, -- ИД КУРСА
     typeId INTEGER REFERENCES LessonTypes(id) ON DELETE RESTRICT, -- ИД ТИПА
-    duration INTERVAL NOT NULL -- ВРЕМЯ
+    duration INTERVAL MINUTE NOT NULL -- ВРЕМЯ
 );
 
 -- Запись/E6

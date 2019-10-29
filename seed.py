@@ -2,7 +2,7 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 100000
+MAIN_ENTITY_COUNT = 100
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 
@@ -42,6 +42,12 @@ def create_db(cursor, connection, faker):
     print('Creating tables')
     # Load schema creation script 
     with open('createCheburek.sql', 'r', encoding='utf8') as script:
+        cursor.execute(script.read())
+    connection.commit()
+
+    print('Creating trigger')
+    # Create trigger for courses duration auto update
+    with open('createTrigger.sql', 'r', encoding='utf8') as script:
         cursor.execute(script.read())
     connection.commit()
 
@@ -85,7 +91,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Courses (title, description, duration) VALUES "
     courses = list()
     for _ in range(int(MAIN_ENTITY_COUNT/5)):
-        courses.append(create_row((faker.text(max_nb_chars=50), faker.text(max_nb_chars=300), random.randrange(10, 100, 1))))
+        courses.append(create_row((faker.text(max_nb_chars=50), faker.text(max_nb_chars=300), 0)))
     query_data = ','.join(courses)
     cursor.execute(query + query_data)
     connection.commit()
@@ -111,7 +117,7 @@ def create_db(cursor, connection, faker):
     for course in courses:
         for _ in range(int(AUX_ENTITY_COUNT/random.randrange(1, int(AUX_ENTITY_COUNT/2)))):
             lessons.append(create_row((course, lessonTypes[random.randrange(0, len(lessonTypes), 1)], 
-                random.randrange(40, 120, 40))))
+                random.randrange(40, 130, 10)))) # Lesson average duration
     query_data = ','.join(lessons)
     cursor.execute(query + query_data)
     connection.commit()
