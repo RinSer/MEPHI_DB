@@ -130,10 +130,8 @@ def create_db(cursor, connection, faker):
     registrations = list()
     for course in courses:
         for _ in range(2):
-            registrations.append(create_row((course, 
-                locations[random.randrange(0, len(locations), 1)] if course % 2 == 0 else NULL, 
-                faker.date_time_this_decade(before_now=True, after_now=True, tzinfo=None), 
-                random.randrange(10000, 100000, 1000))))
+            registrations.append(create_row((course, NULL, 
+                faker.date_time_this_decade(before_now=True, after_now=True, tzinfo=None), 0)))
     query_data = ','.join(registrations)
     cursor.execute(query + query_data)
     connection.commit()
