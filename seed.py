@@ -45,9 +45,15 @@ def create_db(cursor, connection, faker):
         cursor.execute(script.read())
     connection.commit()
 
-    print('Creating trigger')
-    # Create trigger for courses duration auto update
-    with open('createTrigger.sql', 'r', encoding='utf8') as script:
+    print('Creating triggers')
+    # Create triggers for courses duration auto update
+    with open('createTriggers.sql', 'r', encoding='utf8') as script:
+        cursor.execute(script.read())
+    connection.commit()
+
+    print('Creating procedure')
+    # Create procedure to determine registration location and cost
+    with open('createProcedure.sql', 'r', encoding='utf8') as script:
         cursor.execute(script.read())
     connection.commit()
 
@@ -301,9 +307,15 @@ def create_db(cursor, connection, faker):
     cursor.execute(query + query_data)
     connection.commit()
 
+    print("Adjusting masters' courses count")
     # Adjust masters' courses count to data
     query = "SELECT masterId, count(registrationId) FROM lessonMaster GROUP BY masterId;"
     cursor.execute(query)
     for row in cursor.fetchall():
         cursor.execute("UPDATE masters SET coursesCount = %s WHERE id = %s", (row[1], row[0]))
+    connection.commit()
+
+    print("Finding locations and costs for registrations")
+    # Find locations and costs for registrations
+    cursor.execute("SELECT find_location_and_cost(id) FROM Registrations;")
     connection.commit()
