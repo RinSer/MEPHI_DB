@@ -7,6 +7,7 @@ RETURNS void AS $$
 DECLARE
     clientsCount INTEGER;
     locId INTEGER;
+    possibleDate TIMESTAMP;
     totalCost INTEGER;
 BEGIN
     -- Узнаем число записавшихся
@@ -14,31 +15,38 @@ BEGIN
     WHERE rc.registrationId = regId;
     IF clientsCount > 0 THEN
         -- Находим самую дешевую Студия, которая всех вместит
-        SELECT id, rentCost INTO locId, totalCost
-        FROM Locations WHERE capacity >= clientsCount
+        SELECT id, possibleTime, rentCost INTO locId, possibleDate, totalCost
+        FROM Locations l WHERE l.capacity >= clientsCount AND l.possibleTime > now()
+        AND NOT EXISTS (SELECT id FROM Registrations r WHERE r.locationId = l.id)
         ORDER BY capacity, rentCost LIMIT 1;
-        -- Прибавляем стоимость аренды и доставки кухонного оборудования
-        totalCost := totalCost + (SELECT SUM(c) FROM
-        (SELECT (les.quantity - COALESCE(loc.quantity, 0))*(e.averageRentalCost + e.deliveryCost) c 
-        FROM Lessons l 
-        RIGHT JOIN LessonEquipment les ON l.id = les.lessonid 
-        LEFT JOIN LocationEquipment loc ON loc.equipmentid = les.equipmentid 
-        JOIN Equipment e ON e.id = les.equipmentid 
-        WHERE l.courseId = (SELECT courseId FROM Registrations 
-        WHERE id = regId LIMIT 1) 
-        AND loc.locationId = locId) costs);
-        -- Прибавляем стоимость покупки и доставки продуктов
-        totalCost := totalCost + (SELECT SUM(c) FROM
-        (SELECT lf.quantity*(f.averagePrice + f.deliveryCost) c 
-        FROM Lessons l 
-        RIGHT JOIN LessonFood lf ON l.id = lf.lessonid
-        JOIN Food f ON f.id = lf.foodid 
-        WHERE l.courseId = (SELECT courseId FROM Registrations 
-        WHERE id = regId LIMIT 1)) costs);
-        -- Обновляем данные регистрации
-        UPDATE Registrations 
-        SET locationId = locId, cost = totalCost
-        WHERE id = regId;
+        IF locId IS NULL THEN 
+            RAISE EXCEPTION 'Нет студии с вместимостью %', clientsCount;
+        ELSE
+            -- Прибавляем стоимость аренды и доставки кухонного оборудования
+            totalCost := totalCost + COALESCE((SELECT SUM(c) FROM
+            (SELECT (les.quantity - COALESCE(loc.quantity, 0))*(e.averageRentalCost + e.deliveryCost) c 
+            FROM Lessons l 
+            RIGHT JOIN LessonEquipment les ON l.id = les.lessonid 
+            LEFT JOIN LocationEquipment loc ON loc.equipmentid = les.equipmentid 
+            JOIN Equipment e ON e.id = les.equipmentid 
+            WHERE l.courseId = (SELECT courseId FROM Registrations 
+            WHERE id = regId LIMIT 1) 
+            AND loc.locationId = locId) costs), 0);
+            -- Прибавляем стоимость покупки и доставки продуктов
+            totalCost := totalCost + COALESCE((SELECT SUM(c) FROM
+            (SELECT lf.quantity*(f.averagePrice + f.deliveryCost) c 
+            FROM Lessons l 
+            RIGHT JOIN LessonFood lf ON l.id = lf.lessonid
+            JOIN Food f ON f.id = lf.foodid 
+            WHERE l.courseId = (SELECT courseId FROM Registrations 
+            WHERE id = regId LIMIT 1)) costs), 0);
+            -- Обновляем данные регистрации
+            UPDATE Registrations 
+            SET locationId = locId, schedule = possibleDate, cost = totalCost
+            WHERE id = regId;
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'На курс никто не записался!';
     END IF;
 END;
 $$ LANGUAGE plpgsql;

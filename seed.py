@@ -2,7 +2,7 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 100
+MAIN_ENTITY_COUNT = 1000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 
@@ -85,9 +85,10 @@ def create_db(cursor, connection, faker):
     # Seeding locations
     query = "INSERT INTO Locations (capacity, possibleTime, rentCost, address) VALUES "
     locations = list()
-    for _ in range(int(MAIN_ENTITY_COUNT/10)):
-        locations.append(create_row((random.randrange(10, 500, 1), 
-            faker.time(pattern="%H:%M:%S", end_datetime=None), random.randrange(0, 25000, 250), faker.address())))
+    for _ in range(int(MAIN_ENTITY_COUNT/2)):
+        locations.append(create_row((random.randrange(1, AUX_ENTITY_COUNT, 1), 
+            faker.date_time_this_decade(before_now=False, after_now=True, tzinfo=None), 
+            random.randrange(10, 100000, 10), faker.address())))
     query_data = ','.join(locations)
     cursor.execute(query + query_data)
     connection.commit()
@@ -136,8 +137,7 @@ def create_db(cursor, connection, faker):
     registrations = list()
     for course in courses:
         for _ in range(2):
-            registrations.append(create_row((course, NULL, 
-                faker.date_time_this_decade(before_now=True, after_now=True, tzinfo=None), 0)))
+            registrations.append(create_row((course, NULL, NULL, 0)))
     query_data = ','.join(registrations)
     cursor.execute(query + query_data)
     connection.commit()
@@ -300,7 +300,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "
     registrationClient = set()
     for registration in registrations:
-        for _ in range(random.randrange(0, AUX_ENTITY_COUNT)):
+        for _ in range(random.randrange(1, AUX_ENTITY_COUNT)):
             registrationClient.add(create_row((registration, 
                 clients[random.randrange(0, len(clients), 1)])))
     query_data = ','.join(registrationClient)

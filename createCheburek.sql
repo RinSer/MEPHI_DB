@@ -27,7 +27,7 @@ CREATE TABLE Masters (
 CREATE TABLE Locations (
     id SERIAL PRIMARY KEY,
     capacity INT NOT NULL, -- ВМЕСТИМОСТЬ
-    possibleTime TIME NOT NULL, -- ВОЗМОЖНОЕ ВРЕМЯ
+    possibleTime TIMESTAMP NOT NULL, -- ВОЗМОЖНОЕ ВРЕМЯ
     rentCost DECIMAL(12, 2), -- СТОИМОСТЬ АРЕНДЫ
     address VARCHAR(300) NOT NULL -- АДРЕС
 );
@@ -59,7 +59,7 @@ CREATE TABLE Registrations (
     id SERIAL PRIMARY KEY,
     courseId INTEGER REFERENCES Courses(id) ON DELETE RESTRICT, -- ИД КУРСА
     locationId INTEGER REFERENCES Locations(id) ON DELETE RESTRICT, -- ИД СТУДИИ
-    schedule TIMESTAMP NOT NULL, -- РАСПИСАНИЕ
+    schedule TIMESTAMP, -- РАСПИСАНИЕ
     cost DECIMAL(12, 2) NOT NULL -- СТОИМОСТЬ
 );
 
