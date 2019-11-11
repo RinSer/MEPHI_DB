@@ -255,7 +255,7 @@ def create_db(cursor, connection, faker):
     for lesson in lessons:
         for _ in range(random.randrange(2, AUX_ENTITY_COUNT)):
             lessonFood.add((lesson, food[random.randrange(0, len(food), 1)]))
-    query_data = ','.join(create_row((f[0], f[1], random.randrange(1, 100, 1))) for f in lessonFood)
+    query_data = ','.join(create_row((f[0], f[1], random.randrange(1, 10, 1))) for f in lessonFood)
     cursor.execute(query + query_data)
     connection.commit()
 
@@ -268,7 +268,7 @@ def create_db(cursor, connection, faker):
     for lesson in lessons:
         for _ in range(random.randrange(2, AUX_ENTITY_COUNT)):
             lessonEquipment.add((lesson, equipment[random.randrange(0, len(equipment), 1)]))
-    query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 100, 1))) for e in lessonEquipment)
+    query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 10, 1))) for e in lessonEquipment)
     cursor.execute(query + query_data)
     connection.commit()
 
@@ -291,7 +291,7 @@ def create_db(cursor, connection, faker):
     for _ in range(AUX_ENTITY_COUNT*100):
         locationEquipment.add((locations[random.randrange(0, len(locations), 1)],
             equipment[random.randrange(0, len(equipment), 1)]))
-    query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 100, 1))) for e in locationEquipment)
+    query_data = ','.join(create_row((e[0], e[1], random.randrange(1, 10, 1))) for e in locationEquipment)
     cursor.execute(query + query_data)
     connection.commit()
 

@@ -31,7 +31,7 @@ BEGIN
             JOIN Equipment e ON e.id = les.equipmentid 
             WHERE l.courseId = (SELECT courseId FROM Registrations 
             WHERE id = regId LIMIT 1) 
-            AND loc.locationId = locId) costs), 0);
+            AND loc.locationId = locId) costs), 0)*clientsCount;
             -- Прибавляем стоимость покупки и доставки продуктов
             totalCost := totalCost + COALESCE((SELECT SUM(c) FROM
             (SELECT lf.quantity*(f.averagePrice + f.deliveryCost) c 
@@ -39,7 +39,7 @@ BEGIN
             RIGHT JOIN LessonFood lf ON l.id = lf.lessonid
             JOIN Food f ON f.id = lf.foodid 
             WHERE l.courseId = (SELECT courseId FROM Registrations 
-            WHERE id = regId LIMIT 1)) costs), 0);
+            WHERE id = regId LIMIT 1)) costs), 0)*clientsCount;
             -- Обновляем данные регистрации
             UPDATE Registrations 
             SET locationId = locId, schedule = possibleDate, cost = totalCost
