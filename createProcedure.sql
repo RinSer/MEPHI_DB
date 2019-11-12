@@ -25,18 +25,18 @@ BEGIN
             -- Прибавляем стоимость аренды и доставки кухонного оборудования
             totalCost := totalCost + COALESCE((SELECT SUM(c) FROM
             (SELECT (les.quantity - COALESCE(loc.quantity, 0))*(e.averageRentalCost + e.deliveryCost) c 
-            FROM Lessons l 
-            RIGHT JOIN LessonEquipment les ON l.id = les.lessonid 
-            LEFT JOIN LocationEquipment loc ON loc.equipmentid = les.equipmentid 
-            JOIN Equipment e ON e.id = les.equipmentid 
+            FROM LessonEquipment les
+            JOIN Lessons l ON l.id = les.lessonid 
+            JOIN Equipment e ON e.id = les.equipmentid
+            LEFT JOIN (SELECT equipmentid, quantity FROM LocationEquipment 
+            WHERE locationId = locId) loc ON loc.equipmentid = les.equipmentid  
             WHERE l.courseId = (SELECT courseId FROM Registrations 
-            WHERE id = regId LIMIT 1) 
-            AND loc.locationId = locId) costs), 0)*clientsCount;
+            WHERE id = regId LIMIT 1)) costs), 0)*clientsCount;
             -- Прибавляем стоимость покупки и доставки продуктов
             totalCost := totalCost + COALESCE((SELECT SUM(c) FROM
             (SELECT lf.quantity*(f.averagePrice + f.deliveryCost) c 
-            FROM Lessons l 
-            RIGHT JOIN LessonFood lf ON l.id = lf.lessonid
+            FROM LessonFood lf 
+            JOIN Lessons l ON l.id = lf.lessonid
             JOIN Food f ON f.id = lf.foodid 
             WHERE l.courseId = (SELECT courseId FROM Registrations 
             WHERE id = regId LIMIT 1)) costs), 0)*clientsCount;

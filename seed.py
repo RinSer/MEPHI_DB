@@ -2,7 +2,7 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 1000
+MAIN_ENTITY_COUNT = 1000000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 
@@ -85,7 +85,7 @@ def create_db(cursor, connection, faker):
     # Seeding locations
     query = "INSERT INTO Locations (capacity, possibleTime, rentCost, address) VALUES "
     locations = list()
-    for _ in range(int(MAIN_ENTITY_COUNT/2)):
+    for _ in range(MAIN_ENTITY_COUNT):
         locations.append(create_row((random.randrange(1, AUX_ENTITY_COUNT, 1), 
             faker.date_time_this_decade(before_now=False, after_now=True, tzinfo=None), 
             random.randrange(10, 100000, 10), faker.address())))
@@ -147,7 +147,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Food (title, averagePrice, deliveryTime, deliveryCost) VALUES "
     food = list()
     for _ in range(MAIN_ENTITY_COUNT*10):
-        food.append(create_row((faker.text(max_nb_chars=50), random.randrange(10, 10000, 10), 
+        food.append(create_row((faker.text(max_nb_chars=50), random.randrange(10, 1000, 10), 
             random.randrange(10, 600, 10), random.randrange(10, 1000, 10))))
     query_data = ','.join(food)
     cursor.execute(query + query_data)
@@ -158,7 +158,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Equipment (title, averageRentalCost, deliveryTime, deliveryCost) VALUES "
     equipment = list()
     for _ in range(MAIN_ENTITY_COUNT*10):
-        equipment.append(create_row((faker.text(max_nb_chars=50), random.randrange(10, 10000, 10), 
+        equipment.append(create_row((faker.text(max_nb_chars=50), random.randrange(10, 1000, 10), 
             random.randrange(10, 600, 10), random.randrange(10, 1000, 10))))
     query_data = ','.join(equipment)
     cursor.execute(query + query_data)
