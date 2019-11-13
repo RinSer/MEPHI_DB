@@ -2,7 +2,7 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 1000000
+MAIN_ENTITY_COUNT = 100000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 
@@ -85,7 +85,7 @@ def create_db(cursor, connection, faker):
     # Seeding locations
     query = "INSERT INTO Locations (capacity, possibleTime, rentCost, address) VALUES "
     locations = list()
-    for _ in range(MAIN_ENTITY_COUNT):
+    for _ in range(MAIN_ENTITY_COUNT*2):
         locations.append(create_row((random.randrange(1, AUX_ENTITY_COUNT, 1), 
             faker.date_time_this_decade(before_now=False, after_now=True, tzinfo=None), 
             random.randrange(10, 100000, 10), faker.address())))
