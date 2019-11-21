@@ -2,7 +2,7 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 100000
+MAIN_ENTITY_COUNT = 1000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 
@@ -85,8 +85,8 @@ def create_db(cursor, connection, faker):
     # Seeding locations
     query = "INSERT INTO Locations (capacity, possibleTime, rentCost, address) VALUES "
     locations = list()
-    for _ in range(MAIN_ENTITY_COUNT*2):
-        locations.append(create_row((random.randrange(1, AUX_ENTITY_COUNT, 1), 
+    for _ in range(MAIN_ENTITY_COUNT):
+        locations.append(create_row((random.randrange(2, AUX_ENTITY_COUNT*2), 
             faker.date_time_this_decade(before_now=False, after_now=True, tzinfo=None), 
             random.randrange(10, 100000, 10), faker.address())))
     query_data = ','.join(locations)
@@ -320,10 +320,11 @@ def create_db(cursor, connection, faker):
     cursor.execute("SELECT find_location_and_cost(id) FROM Registrations;")
     connection.commit()
 
+    print("Adding history of registrations")
     # Add Locations Past Data for Queries
     cursor.execute("SELECT id, capacity FROM Locations;")
     for row in cursor.fetchall():
-        for _ in range(1, random.randrange(1, AUX_ENTITY_COUNT*5)):
+        for _ in range(1, random.randrange(1, int(AUX_ENTITY_COUNT/2))):
             cursor.execute("SELECT id FROM Courses WHERE random() < 0.5;")
             courseId = cursor.fetchone()[0]
             schedule = faker.date_time_this_decade(before_now=True, after_now=False, tzinfo=None)
@@ -333,12 +334,14 @@ def create_db(cursor, connection, faker):
             cursor.execute(query)
             registrationId = cursor.fetchone()[0]
             # Adding clients
-            for _ in range(1, random.randrange(1, row[1])):
+            clients = set()
+            for _ in range(1, row[1]):
                 cursor.execute("SELECT id FROM Clients WHERE random() < 0.5;")
                 clientId = cursor.fetchone()[0]
-                query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "
-                query += create_row((registrationId, clientId))
-                cursor.execute(query)
+                clients.add(create_row((registrationId, clientId)))
+            query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "    
+            query += ','.join(clients)
+            cursor.execute(query)
             # Adding master
             cursor.execute("SELECT id FROM Masters WHERE random() < 0.5;")
             masterId = cursor.fetchone()[0]
@@ -346,10 +349,10 @@ def create_db(cursor, connection, faker):
             query += create_row((registrationId, masterId))
             cursor.execute(query)
             # Adding lessons for master
-            cursor.execute("SELECT id FROM Lessons WHERE courseId = " + courseId + ";")
+            cursor.execute("SELECT id FROM Lessons WHERE courseId = " + str(courseId) + ";")
             for lesson in cursor.fetchall():
                 query = "INSERT INTO LessonMaster (registrationId, masterId, lessonId, lessonDate) VALUES "
                 query += create_row((registrationId, masterId, lesson[0], faker.date_between_dates(date_start=schedule)))
                 cursor.execute(query)
-            cursor.execute("SELECT find_registration_cost(" + registrationId + ");")
+            cursor.execute("SELECT find_registration_cost(" + str(registrationId) + ");")
             connection.commit()
