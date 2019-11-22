@@ -218,13 +218,17 @@ def create_db(cursor, connection, faker):
 
     print('Seeding substitutes')
     # Seeding substitutes
-    cursor.execute("SELECT id FROM Intolerances")
-    intolerances = [i[0] for i in cursor.fetchall()]
+    cursor.execute("SELECT id, medicineId FROM Intolerances")
+    intolerances = [(i[0], i[1]) for i in cursor.fetchall()]
     query = "INSERT INTO Substitutes (intoleranceId, medicineId) VALUES "
     substitutes = set()
     for _ in range(MAIN_ENTITY_COUNT):
-        substitutes.add(create_row((intolerances[random.randrange(0, len(intolerances), 1)], 
-            medicines[random.randrange(0, len(medicines), 1)])))
+        if random.uniform(0, 1) < 0.3:
+            intolerance = intolerances[random.randrange(0, len(intolerances), 1)]
+            substitutes.add(create_row((intolerance[0], intolerance[1])))
+        else:
+            substitutes.add(create_row((intolerances[random.randrange(0, len(intolerances), 1)][0], 
+                medicines[random.randrange(0, len(medicines), 1)])))
     query_data = ','.join(substitutes)
     cursor.execute(query + query_data)
     connection.commit()
