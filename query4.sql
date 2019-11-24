@@ -6,10 +6,10 @@ AS
 		SELECT 
 			regs.id AS id
 			,regs.courseid AS courseid
-			,(regs.schedule + CONCAT(CAST(COUNT(les.*) AS VARCHAR), ' day')::INTERVAL) AS lastDate
+			,MAX(lm.lessondate) AS lastDate
 			,ROUND(regs.cost / (SELECT COUNT(*) 
 			FROM RegistrationClient WHERE registrationid = regs.id), 2) AS costPerClient
-		FROM Lessons les JOIN Registrations regs ON regs.courseid = les.courseid
+		FROM LessonMaster lm JOIN Registrations regs ON regs.id = lm.registrationid
 		-- уже проведенные
 		WHERE regs.schedule < NOW()
 		GROUP BY regs.id

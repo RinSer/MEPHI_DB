@@ -6,8 +6,8 @@ AS (
 		,regs.courseid AS courseid
 		,regs.locationid AS locationid
 		,regs.schedule AS firstDate
-		,(regs.schedule + CONCAT(CAST(COUNT(les.*) AS VARCHAR), ' day')::INTERVAL) AS lastDate
-	FROM Lessons les JOIN Registrations regs ON regs.courseid = les.courseid
+		,MAX(lm.lessondate) AS lastDate
+	FROM LessonMaster lm JOIN Registrations regs ON regs.id = lm.registrationid
 	-- за этот год
 	WHERE date_part('year', regs.schedule) = '2019'
 	-- уже проведенные

@@ -1,5 +1,5 @@
 import random
-
+from datetime import timedelta
 
 TYPE_ENTITY_COUNT = 4
 MAIN_ENTITY_COUNT = 100000
@@ -233,25 +233,10 @@ def create_db(cursor, connection, faker):
     cursor.execute(query + query_data)
     connection.commit()
 
-    print('Seeding lessonMasters')
-    # Seeding lesson masters
-    cursor.execute("SELECT id FROM Lessons")
-    lessons = [l[0] for l in cursor.fetchall()]
-    cursor.execute("SELECT id FROM Masters")
-    masters = [m[0] for m in cursor.fetchall()]
-    query = "INSERT INTO LessonMaster (lessonId, registrationId, masterId, lessonDate) VALUES "
-    lessonMasters = set()
-    for master in masters:
-        for _ in range(random.randrange(0, AUX_ENTITY_COUNT)):
-            lessonMasters.add((lessons[random.randrange(0, len(lessons), 1)],
-                registrations[random.randrange(0, len(registrations), 1)], master))
-    query_data = ','.join(create_row((l[0], l[1], l[2], 
-            faker.date_time_this_decade(before_now=True, after_now=False, tzinfo=None))) for l in lessonMasters)
-    cursor.execute(query + query_data)
-    connection.commit()
-
     print('Seeding lessonFood')
     # Seeding lesson food
+    cursor.execute("SELECT id FROM Lessons")
+    lessons = [l[0] for l in cursor.fetchall()]
     cursor.execute("SELECT id FROM Food")
     food = [f[0] for f in cursor.fetchall()]
     query = "INSERT INTO LessonFood (lessonId, foodId, quantity) VALUES "
@@ -278,6 +263,8 @@ def create_db(cursor, connection, faker):
 
     print('Seeding registrationMasters')
     # Seeding registration masters
+    cursor.execute("SELECT id FROM Masters")
+    masters = [m[0] for m in cursor.fetchall()]
     query = "INSERT INTO RegistrationMaster (registrationId, masterId) VALUES "
     registrationMaster = set()
     for registration in registrations:
@@ -309,14 +296,6 @@ def create_db(cursor, connection, faker):
                 clients[random.randrange(0, len(clients), 1)])))
     query_data = ','.join(registrationClient)
     cursor.execute(query + query_data)
-    connection.commit()
-
-    print("Adjusting masters' courses count")
-    # Adjust masters' courses count to data
-    query = "SELECT masterId, count(registrationId) FROM lessonMaster GROUP BY masterId;"
-    cursor.execute(query)
-    for row in cursor.fetchall():
-        cursor.execute("UPDATE masters SET coursesCount = %s WHERE id = %s", (row[1], row[0]))
     connection.commit()
 
     print("Finding locations and costs for registrations")
@@ -354,12 +333,22 @@ def create_db(cursor, connection, faker):
             cursor.execute(query)
             # Adding lessons for master
             cursor.execute("SELECT id FROM Lessons WHERE courseId = " + str(courseId) + ";")
-            for lesson in cursor.fetchall():
+            lessons = cursor.fetchall()
+            for lesson in lessons:
                 query = "INSERT INTO LessonMaster (registrationId, masterId, lessonId, lessonDate) VALUES "
-                query += create_row((registrationId, masterId, lesson[0], faker.date_between_dates(date_start=schedule)))
+                query += create_row((registrationId, masterId, lesson[0], faker.date_between_dates(date_start=schedule, 
+                    date_end=schedule+timedelta(days=len(lessons)))))
                 cursor.execute(query)
             cursor.execute("SELECT find_registration_cost(" + str(registrationId) + ");")
             connection.commit()
+
+    print("Adjusting masters' courses count")
+    # Adjust masters' courses count to data
+    query = "SELECT masterId, count(registrationId) FROM lessonMaster GROUP BY masterId;"
+    cursor.execute(query)
+    for row in cursor.fetchall():
+        cursor.execute("UPDATE masters SET coursesCount = %s WHERE id = %s", (row[1], row[0]))
+    connection.commit()
 
     print('Creating materialized view ClientsStat')
     # Creating materialized view (query 4 task)
