@@ -1,16 +1,25 @@
 -- 2) Для Лекарств, у которых заменитель является им же, вывести:
+WITH cteMedicines(Id, Title, SubstituteId, ClientIntolerance)
+AS
+(
+	SELECT 
+		med.id,
+		med.title, 
+		s.medicineid,
+		i.clientid
+	FROM Medicines med
+	RIGHT JOIN Intolerances i ON i.medicineid = med.id
+	RIGHT JOIN Substitutes s ON s.intoleranceid = i.id
+)
 SELECT 
 	-- название Лекарства
-	m.title,
+	cte1.Title AS Title,
 	-- заменители через запятую в одно поле
-	(SELECT string_agg(med.title, ', ') FROM Substitutes sub
-	JOIN Intolerances ins ON ins.id = sub.intoleranceid
-	JOIN Medicines med ON med.id = ins.medicineid
-	WHERE sub.medicineid = m.id) AS Substitutes,
+	string_agg(cte2.Title, ', ') AS SubstitutesList,
 	-- количество клиентов, обладающих непереносимостью
-	(SELECT COUNT(DISTINCT clientId) FROM Intolerances 
-	WHERE medicineid = m.id) AS ClientsIntoleranceCount
-FROM Medicines m
-JOIN Intolerances i ON i.medicineid = m.id
-JOIN Substitutes s ON s.intoleranceid = i.id
-WHERE s.medicineid = m.id;
+	COUNT(DISTINCT cte1.ClientIntolerance) AS ClientsIntoleranceCount
+FROM cteMedicines cte1
+JOIN cteMedicines cte2 
+ON cte1.SubstituteId = cte2.Id
+GROUP BY cte1.Id, cte1.Title
+HAVING bool_or(cte1.Id = cte2.SubstituteId);

@@ -1,17 +1,43 @@
 -- 3) Для каждого Мастера вывести:
-SELECT
-	-- Идентификатор мастера
-	masters.id,
-	-- среднее время промежутков между проводимыми курсами
-	(SELECT AVG(Gap) FROM (SELECT 
-	(LEAD(r.schedule) OVER (ORDER BY r.schedule) - r.schedule) AS Gap
-	FROM RegistrationMaster rm
-	JOIN Registrations r ON r.id = rm.registrationid
-	JOIN Masters m ON m.id = rm.masterid
-	WHERE m.id = masters.id
-	ORDER BY r.schedule) Gaps) AS AverageIntervalBetweenCourses
-	-- количество разных обученных студентов
-	-- количество проведенных курсов
+SELECT md.*, 
+	-- Тип занятия
+	lc.LessonType,
+	-- Месяц
+	lc.Month,
+	-- Количество занятий данного типа за месяц в этом году
+	lc.LessonsCount
+	FROM
+	(SELECT
+		-- Идентификатор мастера
+		m.id AS MasterId,
+		-- среднее время промежутков между проводимыми курсами
+		(SELECT AVG(Gap) FROM (SELECT 
+		(LEAD(schedule) OVER (ORDER BY schedule) - schedule) AS Gap
+		FROM Registrations
+		WHERE id = ANY(array_agg(rm.registrationid))
+		) AS Gaps) AS AverageIntervalBetweenCourses,
+		-- количество разных обученных студентов
+		(SELECT COUNT(*) FROM RegistrationClient
+		WHERE registrationid = ANY(array_agg(rm.registrationid))) AS StudentsCount,
+		-- количество проведенных курсов
+		COUNT(rm.*) AS CoursesCount
+	FROM RegistrationMaster rm 
+	JOIN Masters m ON rm.masterid = m.id
+	GROUP BY rm.masterid, m.id) md
+RIGHT JOIN
 	-- количество проведенных занятий по каждому типу в разрезе каждого месяца за последний год
-FROM Masters masters
-WHERE (SELECT COUNT(*) FROM RegistrationMaster WHERE masterid = masters.id) > 1;
+	(SELECT 
+		m.id AS MasterId,
+		l.typeid AS LessonType,
+		extract(month from r.schedule) AS MonthIndex,
+		to_char(r.schedule, 'month') AS Month,
+		COUNT(l.*) AS LessonsCount
+	FROM Registrations r
+	JOIN Courses c ON r.courseid = c.id
+	RIGHT JOIN Lessons l ON l.courseid = c.id
+	RIGHT JOIN RegistrationMaster rm ON r.id = rm.registrationid
+	JOIN Masters m ON rm.masterid = m.id
+	WHERE r.schedule < NOW() AND date_part('year', r.schedule) = '2019'
+	GROUP BY 1, 2, 3, 4
+	ORDER BY 1, 2, 3) lc
+ON md.MasterId = lc.MasterId;
