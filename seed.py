@@ -2,10 +2,10 @@ import random
 
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 1000
+MAIN_ENTITY_COUNT = 100000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
-
+CLIENTS_COUNT = MAIN_ENTITY_COUNT*5
 
 def get_user(faker):
     '''
@@ -61,7 +61,7 @@ def create_db(cursor, connection, faker):
     # Seeding clients
     query = "INSERT INTO Clients (lastName, firstName, patronimicName, phone, email, account) VALUES "
     clients = list()
-    for _ in range(MAIN_ENTITY_COUNT*5):
+    for _ in range(CLIENTS_COUNT):
         name = get_user(faker)
         clients.append(create_row((name[0], name[1], name[2], 
             faker.phone_number().replace(' ', ''), faker.free_email(), faker.bban())))
@@ -340,14 +340,14 @@ def create_db(cursor, connection, faker):
             # Adding clients
             clients = set()
             for _ in range(1, row[1]):
-                cursor.execute("SELECT id FROM Clients WHERE random() < 0.5;")
+                cursor.execute("SELECT id FROM Clients OFFSET floor(random()*"+str(CLIENTS_COUNT)+") LIMIT 1;")
                 clientId = cursor.fetchone()[0]
                 clients.add(create_row((registrationId, clientId)))
             query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "    
             query += ','.join(clients)
             cursor.execute(query)
             # Adding master
-            cursor.execute("SELECT id FROM Masters WHERE random() < 0.5;")
+            cursor.execute("SELECT id FROM Masters OFFSET floor(random()*"+str(MAIN_ENTITY_COUNT)+") LIMIT 1;")
             masterId = cursor.fetchone()[0]
             query = "INSERT INTO RegistrationMaster (registrationId, masterId) VALUES "
             query += create_row((registrationId, masterId))
@@ -360,3 +360,9 @@ def create_db(cursor, connection, faker):
                 cursor.execute(query)
             cursor.execute("SELECT find_registration_cost(" + str(registrationId) + ");")
             connection.commit()
+
+    print('Creating materialized view ClientsStat')
+    # Creating materialized view (query 4 task)
+    with open('query4.sql', 'r', encoding='utf8') as script:
+        cursor.execute(script.read())
+    connection.commit()
