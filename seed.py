@@ -6,6 +6,7 @@ MAIN_ENTITY_COUNT = 100000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 CLIENTS_COUNT = MAIN_ENTITY_COUNT*5
+COURSES_COUNT = MAIN_ENTITY_COUNT/5
 
 def get_user(faker):
     '''
@@ -86,7 +87,7 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Locations (capacity, possibleTime, rentCost, address) VALUES "
     locations = list()
     for _ in range(MAIN_ENTITY_COUNT):
-        locations.append(create_row((random.randrange(2, AUX_ENTITY_COUNT*2), 
+        locations.append(create_row((random.randrange(2, AUX_ENTITY_COUNT), 
             faker.date_time_this_decade(before_now=False, after_now=True, tzinfo=None), 
             random.randrange(10, 100000, 10), faker.address())))
     query_data = ','.join(locations)
@@ -97,7 +98,7 @@ def create_db(cursor, connection, faker):
     # Seeding courses
     query = "INSERT INTO Courses (title, description, duration) VALUES "
     courses = list()
-    for _ in range(int(MAIN_ENTITY_COUNT/5)):
+    for _ in range(int(COURSES_COUNT)):
         courses.append(create_row((faker.text(max_nb_chars=50), faker.text(max_nb_chars=300), 0)))
     query_data = ','.join(courses)
     cursor.execute(query + query_data)
@@ -305,11 +306,11 @@ def create_db(cursor, connection, faker):
 
     print("Adding history of registrations")
     # Add Locations Past Data for Queries
+    registrations = set()
     cursor.execute("SELECT id, capacity FROM Locations;")
     for row in cursor.fetchall():
-        for _ in range(1, random.randrange(1, int(AUX_ENTITY_COUNT/2))):
-            cursor.execute("SELECT id FROM Courses WHERE random() < 0.5;")
-            courseId = cursor.fetchone()[0]
+        for _ in range(1, random.randrange(0, 6)):
+            courseId = courses[random.randrange(0, len(courses))]
             schedule = faker.date_time_this_decade(before_now=True, after_now=False, tzinfo=None)
             query = "INSERT INTO Registrations (courseId, locationId, schedule, cost) VALUES "
             query += create_row((courseId, row[0], schedule, 0))
@@ -317,30 +318,32 @@ def create_db(cursor, connection, faker):
             cursor.execute(query)
             registrationId = cursor.fetchone()[0]
             # Adding clients
-            clients = set()
+            regClients = set()
             for _ in range(1, row[1]):
-                cursor.execute("SELECT id FROM Clients OFFSET floor(random()*"+str(CLIENTS_COUNT)+") LIMIT 1;")
-                clientId = cursor.fetchone()[0]
-                clients.add(create_row((registrationId, clientId)))
+                regClients.add(create_row((registrationId, clients[random.randrange(0, len(clients))])))
             query = "INSERT INTO RegistrationClient (registrationId, clientId) VALUES "    
-            query += ','.join(clients)
+            query += ','.join(regClients)
             cursor.execute(query)
             # Adding master
-            cursor.execute("SELECT id FROM Masters OFFSET floor(random()*"+str(MAIN_ENTITY_COUNT)+") LIMIT 1;")
-            masterId = cursor.fetchone()[0]
+            masterId = masters[random.randrange(0, len(masters))]
             query = "INSERT INTO RegistrationMaster (registrationId, masterId) VALUES "
             query += create_row((registrationId, masterId))
             cursor.execute(query)
             # Adding lessons for master
             cursor.execute("SELECT id FROM Lessons WHERE courseId = " + str(courseId) + ";")
             lessons = cursor.fetchall()
+            lms = set()
             for lesson in lessons:
                 query = "INSERT INTO LessonMaster (registrationId, masterId, lessonId, lessonDate) VALUES "
-                query += create_row((registrationId, masterId, lesson[0], faker.date_between_dates(date_start=schedule, 
-                    date_end=schedule+timedelta(days=len(lessons)))))
-                cursor.execute(query)
-            cursor.execute("SELECT find_registration_cost(" + str(registrationId) + ");")
+                lms.add(create_row((registrationId, masterId, lesson[0], faker.date_between_dates(date_start=schedule, 
+                    date_end=schedule+timedelta(days=len(lessons))))))
+            cursor.execute(query + ','.join(lms))
+            registrations.add(registrationId)
             connection.commit()
+    print("Finding costs for historic registrations")
+    for reg in registrations:
+        cursor.execute("SELECT find_registration_cost(" + str(reg) + ");")
+    connection.commit()
 
     print("Adjusting masters' courses count")
     # Adjust masters' courses count to data
