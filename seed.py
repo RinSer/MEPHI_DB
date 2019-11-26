@@ -1,5 +1,6 @@
 import random
 from datetime import timedelta
+from vacuum import Vaccum
 
 TYPE_ENTITY_COUNT = 4
 MAIN_ENTITY_COUNT = 100000
@@ -352,6 +353,20 @@ def create_db(cursor, connection, faker):
     for row in cursor.fetchall():
         cursor.execute("UPDATE masters SET coursesCount = %s WHERE id = %s", (row[1], row[0]))
     connection.commit()
+
+    # Vacuum DB prior to create Materialized View
+    v = Vaccum(connection, 'public')
+    print(v.get_tables())
+    for table in v.get_tables():
+
+        verbose = '[%s] VACUUM VERBOSE ANALYZE' % table
+        print(verbose)
+
+        # print out the VACUUM  VERBOSE results
+        # using formating.
+        notices = v.vaccum(table)
+        for notice in notices:
+            print(notice)
 
     print('Creating materialized view ClientsStat')
     # Creating materialized view (query 4 task)
