@@ -341,8 +341,8 @@ def create_db(cursor, connection, faker):
             registrations.add(registrationId)
             connection.commit()
     print("Finding costs for historic registrations")
-    for reg in registrations:
-        cursor.execute("SELECT find_registration_cost(" + str(reg) + ");")
+    regs = ','.join([str(reg) for reg in registrations])
+    cursor.execute("SELECT find_registration_cost(id) FROM Registrations WHERE id in (" + regs + ");")
     connection.commit()
 
     print("Adjusting masters' courses count")
