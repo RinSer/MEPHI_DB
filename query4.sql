@@ -35,7 +35,7 @@ AS
 		-- дата последнего посещения курсов
 		,to_char(MAX(r.lastDate), 'DD.MM.YYYY') AS LastLessonDate
 	FROM Clients c
-	LEFT JOIN RegistrationClient rc ON rc.clientid = c.id
-	LEFT JOIN cteRegistrations r ON rc.registrationid = r.id
+	RIGHT JOIN RegistrationClient rc ON rc.clientid = c.id
+	JOIN cteRegistrations r ON rc.registrationid = r.id
 	GROUP BY rc.clientid, c.id
 	ORDER BY c.id
