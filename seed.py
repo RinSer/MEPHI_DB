@@ -3,7 +3,7 @@ from datetime import timedelta
 from vacuum import Vaccum
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 10000
+MAIN_ENTITY_COUNT = 100000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 CLIENTS_COUNT = MAIN_ENTITY_COUNT
