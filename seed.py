@@ -3,7 +3,7 @@ from datetime import timedelta
 from vacuum import Vaccum
 
 TYPE_ENTITY_COUNT = 4
-MAIN_ENTITY_COUNT = 100000
+MAIN_ENTITY_COUNT = 10000
 AUX_ENTITY_COUNT = 25
 NULL = 'NULL'
 CLIENTS_COUNT = MAIN_ENTITY_COUNT
@@ -225,12 +225,15 @@ def create_db(cursor, connection, faker):
     query = "INSERT INTO Substitutes (intoleranceId, medicineId) VALUES "
     substitutes = set()
     for _ in range(MAIN_ENTITY_COUNT):
+        intolerance = intolerances[random.randrange(0, len(intolerances), 1)]
+        medicine = medicines[random.randrange(0, len(medicines), 1)]
+        substitutes.add(create_row((intolerance[0], medicine)))
         if random.uniform(0, 1) < 0.3:
-            intolerance = intolerances[random.randrange(0, len(intolerances), 1)]
-            substitutes.add(create_row((intolerance[0], intolerance[1])))
-        else:
-            substitutes.add(create_row((intolerances[random.randrange(0, len(intolerances), 1)][0], 
-                medicines[random.randrange(0, len(medicines), 1)])))
+            queryInt = "INSERT INTO Intolerances (clientId, medicineId) VALUES "
+            queryInt += create_row((clients[random.randrange(0, len(clients), 1)], medicine)) + " RETURNING id;"
+            cursor.execute(queryInt)
+            intoleranceId = cursor.fetchone()[0]
+            substitutes.add(create_row((intoleranceId, intolerance[1])))
     query_data = ','.join(substitutes)
     cursor.execute(query + query_data)
     connection.commit()
@@ -368,8 +371,8 @@ def create_db(cursor, connection, faker):
         for notice in notices:
             print(notice)
 
-    print('Creating materialized view ClientsStat')
+    '''print('Creating materialized view ClientsStat')
     # Creating materialized view (query 4 task)
     with open('query4.sql', 'r', encoding='utf8') as script:
         cursor.execute(script.read())
-    connection.commit()
+    connection.commit()'''
