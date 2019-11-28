@@ -7,26 +7,34 @@ SELECT md.*,
 	-- Количество занятий данного типа за месяц в этом году
 	lc.LessonsCount
 	FROM
-	(SELECT
+	(WITH cteRegistrations(RegistrationId, MasterId, Gap, ClientsCount)
+	AS
+	(
+		SELECT
+			r.id
+			,lm.masterid
+			-- время до следующего курса мастера
+			,LEAD(r.schedule) OVER (PARTITION BY lm.masterid ORDER BY r.schedule) - MAX(lm.lessondate)
+			-- количество разных обученных студентов на курс
+			,COUNT(DISTINCT rc.clientid)
+		FROM Registrations r
+		JOIN RegistrationClient rc ON rc.registrationid = r.id
+		JOIN LessonMaster lm ON lm.registrationid = r.id
+		WHERE r.schedule < NOW()
+		GROUP BY r.id, lm.masterid
+	)
+	SELECT
 		-- Идентификатор мастера
-		rm.masterid AS MasterId,
+		masterid
 		-- среднее время промежутков между проводимыми курсами
-		(SELECT AVG(Gap) FROM (SELECT 
-		(LEAD(rgs.schedule) OVER (ORDER BY rgs.schedule) - MAX(lmr.lessondate)) AS Gap
-		FROM Registrations rgs JOIN LessonMaster lmr ON rgs.id = lmr.registrationid
-		WHERE rgs.id = ANY(array_agg(rm.registrationid))
-		GROUP BY rgs.id
-		) AS Gaps) AS AverageIntervalBetweenCourses,
+		,AVG(Gap) AS AverageIntervalBetweenCourses
 		-- количество разных обученных студентов
-		(SELECT COUNT(*) FROM RegistrationClient
-		WHERE registrationid = ANY(array_agg(rm.registrationid))) AS StudentsCount,
+		,SUM(clientsCount) AS StudentsCount
 		-- количество проведенных курсов
-		COUNT(rm.*) AS CoursesCount
-	FROM RegistrationMaster rm
-	JOIN registrations r ON rm.registrationid = r.id
-	WHERE r.schedule < NOW()
-	GROUP BY rm.masterid) md
-RIGHT JOIN
+		,COUNT(DISTINCT registrationid) AS CoursesCount
+	FROM cteRegistrations
+	GROUP BY masterid) md
+JOIN
 	-- количество проведенных занятий по каждому типу в разрезе каждого месяца за последний год
 	(SELECT 
 		lm.masterid AS MasterId,
