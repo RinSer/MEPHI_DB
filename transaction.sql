@@ -27,12 +27,15 @@ SELECT
 	COUNT(*)
 FROM cteRegistrations r
 WHERE 
-(SELECT firstLesson FROM cteRegistrations 
-WHERE id = (SELECT reg FROM ids LIMIT 1) LIMIT 1)
-BETWEEN r.firstLesson AND r.lastLesson
+((SELECT firstLesson FROM cteRegistrations 
+WHERE id = (SELECT reg FROM ids LIMIT 1) LIMIT 1),
+(SELECT lastLesson FROM cteRegistrations 
+WHERE id = (SELECT reg FROM ids LIMIT 1) LIMIT 1))
+OVERLAPS (r.firstLesson, r.lastLesson)
+OR (SELECT firstLesson FROM cteRegistrations 
+WHERE id = (SELECT reg FROM ids LIMIT 1) LIMIT 1) = r.lastLesson
 OR (SELECT lastLesson FROM cteRegistrations 
-WHERE id = (SELECT reg FROM ids LIMIT 1) LIMIT 1)
-BETWEEN r.firstLesson AND r.lastLesson) < 2
+WHERE id = (SELECT reg FROM ids LIMIT 1) LIMIT 1) = r.firstLesson) < 2
 RETURNING registrationId, clientid
 
 ROLLBACK TRANSACTION
